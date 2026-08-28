@@ -1,0 +1,19 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.venv/
+dist/
+build/
+*.egg-info/
+.streamlit/secrets.toml
+data/private/**
+!data/private/.gitkeep
+outputs/
+.local-tools/
+.molood-env/
+molood-explorer-local.zip
+# Accidental directory created when a launch command was pasted as a path.
+/micromamba run*/
