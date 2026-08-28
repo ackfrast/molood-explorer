@@ -57,6 +57,26 @@ chart = px.histogram(featured, x="_molood_hac", nbins=min(30, max(5, len(feature
 st.plotly_chart(chart, width="stretch")
 
 st.subheader("3 · Configure split")
+split_designs = {
+    "Simple train/test": {
+        "mode": "simple",
+        "purpose": "Default for ordinary model comparison and direct ID→OOD generalization tests. No calibration data is created.",
+        "outputs": "train.csv, test.csv",
+    },
+    "Train + ID calibration + OOD test": {
+        "mode": "id_calibration",
+        "purpose": "For probability calibration, conformal prediction, or uncertainty thresholds when no OOD calibration samples are assumed available before deployment.",
+        "outputs": "proper_train.csv, id_calibration.csv, ood_test.csv",
+    },
+    "Full OOD calibration split": {
+        "mode": "full",
+        "purpose": "For OOD-aware calibration, reject-option tuning, or OOD detection thresholds. Use only when representative OOD calibration samples are scientifically available.",
+        "outputs": "proper_train.csv, id_calibration.csv, ood_calibration.csv, ood_test.csv",
+    },
+}
+design_label = st.selectbox("Split design", list(split_designs))
+design = split_designs[design_label]
+st.info(f"Default use: {design['purpose']}\n\nOutputs: {design['outputs']}")
 feasible = [item for item in report["candidates"] if item["feasible"]]
 selected_name = st.selectbox("Scenario", [item["scenario"] for item in feasible])
 selected = next(item for item in feasible if item["scenario"] == selected_name)
@@ -66,9 +86,12 @@ st.caption(f"OOD calibration: {selected['ood_calibration_suitability']}")
 default_threshold = json.dumps(selected["recommended_threshold"], ensure_ascii=False)
 threshold_text = st.text_input("Threshold (JSON or scalar)", value=default_threshold)
 seed = st.number_input("Seed", min_value=0, value=42, step=1)
-c1, c2 = st.columns(2)
-id_cal_fraction = c1.slider("ID calibration fraction of ID", 0.0, 0.5, 0.1, 0.05)
-ood_cal_fraction = c2.slider("OOD calibration fraction of OOD", 0.0, 0.9, 0.5, 0.05)
+id_cal_fraction = 0.0
+ood_cal_fraction = 0.0
+if design["mode"] in {"id_calibration", "full"}:
+    id_cal_fraction = st.slider("ID calibration fraction of ID", 0.0, 0.5, 0.1, 0.05)
+if design["mode"] == "full":
+    ood_cal_fraction = st.slider("OOD calibration fraction of OOD", 0.0, 0.9, 0.5, 0.05)
 
 try:
     threshold = json.loads(threshold_text)
@@ -79,6 +102,7 @@ try:
     result = create_split(frame, smiles_column, SplitConfig(
         scenario=selected_name, threshold=threshold, seed=int(seed), ood_fraction=ood_fraction,
         id_calibration_fraction=id_cal_fraction, ood_calibration_fraction=ood_cal_fraction,
+        split_mode=design["mode"],
     ), target_column)
 except Exception as exc:
     st.error(f"Split is not valid: {exc}")

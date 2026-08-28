@@ -47,3 +47,23 @@ def test_empty_partition_is_rejected(molecules):
     with pytest.raises(ValueError, match="non-empty"):
         create_split(molecules, "smiles", SplitConfig("size", threshold=999))
 
+
+@pytest.mark.parametrize("mode, expected", [
+    ("simple", {"train", "test"}),
+    ("id_calibration", {"proper_train", "id_calibration", "ood_test"}),
+    ("full", {"proper_train", "id_calibration", "ood_calibration", "ood_test"}),
+])
+def test_split_modes_only_emit_relevant_outputs(molecules, mode, expected):
+    result = create_split(molecules, "smiles", SplitConfig(
+        "random", seed=9, ood_fraction=0.35, id_calibration_fraction=0.25,
+        ood_calibration_fraction=0.5, split_mode=mode,
+    ))
+    assert set(result["manifest"]["split_counts"]) == expected
+    assert set(result) == expected | {"manifest"}
+    groups = [set(rows) for rows in result["manifest"]["source_row_positions"].values()]
+    assert sum(map(len, groups)) == len(set().union(*groups)) == 11
+
+
+def test_unknown_split_mode_is_rejected(molecules):
+    with pytest.raises(ValueError, match="split_mode"):
+        create_split(molecules, "smiles", SplitConfig("random", split_mode="unknown"))

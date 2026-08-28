@@ -35,6 +35,8 @@ def build_parser() -> argparse.ArgumentParser:
     split.add_argument("--scenario", required=True, help="random, scaffold, size, element, or property:mw/logp/tpsa")
     split.add_argument("--threshold", help="Number, string, or JSON object from the explore report")
     split.add_argument("--seed", type=int, default=42)
+    split.add_argument("--split-mode", choices=["simple", "id_calibration", "full"], default="full",
+                       help="simple=train/test; id_calibration=add ID calibration; full=add ID and OOD calibration")
     split.add_argument("--ood-fraction", type=float, default=0.2)
     split.add_argument("--id-calibration-fraction", type=float, default=0.1)
     split.add_argument("--ood-calibration-fraction", type=float, default=0.5)
@@ -61,6 +63,7 @@ def main(argv: list[str] | None = None) -> int:
         ood_fraction=args.ood_fraction,
         id_calibration_fraction=args.id_calibration_fraction,
         ood_calibration_fraction=args.ood_calibration_fraction,
+        split_mode=args.split_mode,
     )
     result = create_split(frame, args.smiles_column, config, args.target_column)
     for path in export_split(result, args.output_dir):
@@ -70,4 +73,3 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

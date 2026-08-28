@@ -1,6 +1,6 @@
 # MolOOD Explorer
 
-MolOOD Explorer inspects molecular tables, recommends plausible out-of-distribution (OOD) scenarios, and creates reproducible train/calibration/test splits. Version 0.1 supports random baseline, Bemis–Murcko scaffold, size/heavy-atom count (HAC), element occurrence, and MW/logP/TPSA property shifts.
+MolOOD Explorer inspects molecular tables, recommends plausible out-of-distribution (OOD) scenarios, and creates reproducible train/calibration/test splits. Version 0.2 supports random baseline, Bemis–Murcko scaffold, size/heavy-atom count (HAC), element occurrence, and MW/logP/TPSA property shifts.
 
 This is a scenario-design aid, not proof that a split represents deployment-time OOD. Inspect assay provenance, dates, labels, duplicates, salts, and series membership before drawing scientific conclusions.
 
@@ -82,12 +82,32 @@ Create a split using a recommended threshold copied from that report:
 molood split examples/synthetic_molecules.csv \
   --smiles-column smiles --target-column activity \
   --scenario size --threshold '{"feature":"hac","operator":">=","value":7}' \
+  --split-mode full \
   --seed 42 --ood-fraction 0.2 \
   --id-calibration-fraction 0.1 --ood-calibration-fraction 0.5 \
   --output-dir outputs/example
 ```
 
-Outputs are `proper_train.csv`, `id_calibration.csv`, `ood_calibration.csv`, `ood_test.csv`, and `split_manifest.json`. Fractions for calibration are conditional: ID calibration is drawn from the ID group, and OOD calibration from the OOD group. Tiny groups may be unsuitable even when a split is mechanically possible.
+## Split designs and their default uses
+
+The scenario defines *which chemistry is held out*; the split design defines *whether calibration subsets are also needed*. The Streamlit UI defaults to the familiar simple train/test design. The CLI defaults to `full` for backward compatibility, so specify `--split-mode` explicitly in reproducible scripts.
+
+| Split design | Default use | Output CSV files |
+|---|---|---|
+| `simple` | Ordinary model comparison and direct generalization from the ID region to the scenario-defined test region. No probability/OOD calibration. | `train.csv`, `test.csv` |
+| `id_calibration` | Probability calibration, conformal prediction, or uncertainty thresholds when representative OOD samples are not assumed available before deployment. | `proper_train.csv`, `id_calibration.csv`, `ood_test.csv` |
+| `full` | OOD-aware calibration, reject-option tuning, or OOD detection threshold research when a separate representative OOD calibration sample is scientifically available. | `proper_train.csv`, `id_calibration.csv`, `ood_calibration.csv`, `ood_test.csv` |
+
+Every design also writes `split_manifest.json`. For an OOD scenario, `test.csv` or `ood_test.csv` is the scenario-defined held-out region; for the random baseline it is an IID random test group. Calibration fractions are conditional: ID calibration is drawn from the ID group, and OOD calibration from the OOD group. Tiny groups may be mechanically splittable but scientifically unsuitable.
+
+Simple train/test example:
+
+```bash
+molood split examples/synthetic_molecules.csv \
+  --smiles-column smiles --scenario scaffold \
+  --threshold '{"held_out_scaffolds":["c1ccccc1"]}' \
+  --split-mode simple --seed 42 --output-dir outputs/simple
+```
 
 ## Streamlit UI
 
@@ -95,7 +115,7 @@ Outputs are `proper_train.csv`, `id_calibration.csv`, `ood_calibration.csv`, `oo
 micromamba run -n molood-explorer streamlit run app.py
 ```
 
-The four-step UI uploads data, compares scenario recommendations, configures a split, previews it, and downloads all outputs as a ZIP. Analysis and splitting remain in the importable `molood_explorer` package.
+The four-step UI uploads data, compares scenario recommendations, configures a split, previews it, and downloads the selected design's outputs as a ZIP. The **Split design** selector explains the default purpose and exact files before splitting. Analysis and splitting remain in the importable `molood_explorer` package.
 
 Streamlit prints a URL after startup. For a remote PBS cluster, do not expose the port publicly; bind it locally and use an SSH tunnel according to site policy:
 

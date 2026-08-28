@@ -1,6 +1,13 @@
-# MolOOD Explorer v0.1.2
+# MolOOD Explorer v0.2.0
 
 First public preview of a local molecular out-of-distribution scenario exploration and splitting tool.
+
+## v0.2.0 features
+
+- Adds three explicit split designs: simple train/test, train + ID calibration + OOD test, and the full ID/OOD calibration design.
+- The UI explains each design's default scientific use and exact output files before creating a split.
+- Unused calibration CSVs are no longer emitted; simple mode produces the familiar `train.csv` and `test.csv`.
+- CLI adds `--split-mode simple|id_calibration|full`; manifests record the selected mode and its purpose.
 
 ## v0.1.2 fixes
 

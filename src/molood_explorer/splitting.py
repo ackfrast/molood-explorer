@@ -12,6 +12,13 @@ from .chemistry import featurize
 from .io import validate_columns
 
 
+SPLIT_MODES = {
+    "simple": "General train/test evaluation without calibration.",
+    "id_calibration": "Probability or uncertainty calibration using only in-distribution data.",
+    "full": "OOD-aware calibration, rejection, or OOD detection research.",
+}
+
+
 @dataclass(frozen=True)
 class SplitConfig:
     scenario: str
@@ -20,6 +27,7 @@ class SplitConfig:
     ood_fraction: float = 0.2
     id_calibration_fraction: float = 0.1
     ood_calibration_fraction: float = 0.5
+    split_mode: str = "full"
 
 
 def _threshold_mask(featured: pd.DataFrame, config: SplitConfig, rng: np.random.Generator) -> np.ndarray:
@@ -56,6 +64,8 @@ def _take_calibration(indices: np.ndarray, fraction: float, rng: np.random.Gener
 def create_split(frame: pd.DataFrame, smiles_column: str, config: SplitConfig,
                  target_column: str | None = None) -> dict[str, Any]:
     validate_columns(frame, smiles_column, target_column)
+    if config.split_mode not in SPLIT_MODES:
+        raise ValueError(f"split_mode must be one of: {', '.join(SPLIT_MODES)}")
     for name, value in (("ood_fraction", config.ood_fraction), ("id_calibration_fraction", config.id_calibration_fraction),
                         ("ood_calibration_fraction", config.ood_calibration_fraction)):
         if not 0 <= value <= 1:
@@ -68,27 +78,36 @@ def create_split(frame: pd.DataFrame, smiles_column: str, config: SplitConfig,
     id_idx, ood_idx = np.flatnonzero(~ood_mask), np.flatnonzero(ood_mask)
     if not len(id_idx) or not len(ood_idx):
         raise ValueError("The selected scenario/threshold must produce non-empty ID and OOD groups")
-    id_cal, train = _take_calibration(id_idx, config.id_calibration_fraction, rng)
-    ood_cal, ood_test = _take_calibration(ood_idx, config.ood_calibration_fraction, rng)
+    if config.split_mode == "simple":
+        split_indices = {"train": rng.permutation(id_idx), "test": rng.permutation(ood_idx)}
+    elif config.split_mode == "id_calibration":
+        id_cal, train = _take_calibration(id_idx, config.id_calibration_fraction, rng)
+        split_indices = {
+            "proper_train": train,
+            "id_calibration": id_cal,
+            "ood_test": rng.permutation(ood_idx),
+        }
+    else:
+        id_cal, train = _take_calibration(id_idx, config.id_calibration_fraction, rng)
+        ood_cal, ood_test = _take_calibration(ood_idx, config.ood_calibration_fraction, rng)
+        split_indices = {
+            "proper_train": train,
+            "id_calibration": id_cal,
+            "ood_calibration": ood_cal,
+            "ood_test": ood_test,
+        }
     output_columns = [c for c in frame.columns]
-    parts = {
-        "proper_train": featured.iloc[train][output_columns].reset_index(drop=True),
-        "id_calibration": featured.iloc[id_cal][output_columns].reset_index(drop=True),
-        "ood_calibration": featured.iloc[ood_cal][output_columns].reset_index(drop=True),
-        "ood_test": featured.iloc[ood_test][output_columns].reset_index(drop=True),
-    }
-    row_ids = {
-        "proper_train": featured.iloc[train]["_molood_row_id"].astype(int).tolist(),
-        "id_calibration": featured.iloc[id_cal]["_molood_row_id"].astype(int).tolist(),
-        "ood_calibration": featured.iloc[ood_cal]["_molood_row_id"].astype(int).tolist(),
-        "ood_test": featured.iloc[ood_test]["_molood_row_id"].astype(int).tolist(),
-    }
+    parts = {name: featured.iloc[indices][output_columns].reset_index(drop=True)
+             for name, indices in split_indices.items()}
+    row_ids = {name: featured.iloc[indices]["_molood_row_id"].astype(int).tolist()
+               for name, indices in split_indices.items()}
     manifest = {
         "format_version": 1,
         "tool": "molood-explorer",
         "smiles_column": smiles_column,
         "target_column": target_column,
         "config": asdict(config),
+        "split_mode_purpose": SPLIT_MODES[config.split_mode],
         "input_rows": len(frame),
         "valid_rows": len(featured),
         "rejected_rows": rejected.to_dict(orient="records"),
@@ -102,7 +121,7 @@ def export_split(result: dict[str, Any], output_dir: str | Path) -> list[Path]:
     destination = Path(output_dir)
     destination.mkdir(parents=True, exist_ok=True)
     paths = []
-    for name in ("proper_train", "id_calibration", "ood_calibration", "ood_test"):
+    for name in result["manifest"]["split_counts"]:
         path = destination / f"{name}.csv"
         result[name].to_csv(path, index=False)
         paths.append(path)
