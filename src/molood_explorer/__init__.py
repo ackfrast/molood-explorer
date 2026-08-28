@@ -1,6 +1,6 @@
 """Molecular out-of-distribution scenario exploration and splitting."""
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 
 from .analysis import explore_scenarios
 from .splitting import SplitConfig, create_split, export_split

@@ -1,6 +1,12 @@
-# MolOOD Explorer v0.2.0
+# MolOOD Explorer v0.2.1
 
 First public preview of a local molecular out-of-distribution scenario exploration and splitting tool.
+
+## v0.2.1 fixes
+
+- Installers remove Micromamba download and extracted-package caches after successful validation.
+- Documents the expected approximately 1.3 GB runtime environment and explains how multiple extracted releases multiply disk use.
+- Adds safe cache-cleanup commands that preserve the application environment and molecular data.
 
 ## v0.2.0 features
 

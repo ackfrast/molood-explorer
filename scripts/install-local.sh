@@ -43,6 +43,10 @@ fi
     --smiles-column smiles --target-column activity \
     --output "${local_temp}/scenario_report.json"
 
+echo "Removing downloaded package caches to reduce disk usage..."
+"${micromamba_bin}" clean --all --yes || \
+    echo "Warning: cache cleanup failed; the app is installed but may use extra disk space." >&2
+
 echo
 echo "Installation and smoke test complete. Start MolOOD Explorer with:"
 echo "  bash scripts/run-local.sh"

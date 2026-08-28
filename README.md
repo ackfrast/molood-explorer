@@ -10,6 +10,8 @@ Download and extract the project, then follow [LOCAL_INSTALL.md](LOCAL_INSTALL.m
 
 GitHub Release users can double-click `Install-Windows.bat` on Windows, or use `Install-macOS-Linux.command` on macOS/Linux. Always extract the archive before installing.
 
+The local runtime environment is approximately 1.3 GB. Installers remove downloaded package caches after validation. Avoid installing multiple extracted release folders because each folder contains an independent environment; see [LOCAL_INSTALL.md](LOCAL_INSTALL.md#disk-usage-and-cleanup) for safe cleanup commands.
+
 ### Local UI address and ports
 
 The launcher binds only to `127.0.0.1`, so the UI is available only on the computer running MolOOD Explorer. It first tries:

@@ -55,6 +55,12 @@ if ($LASTEXITCODE -ne 0) { throw "Core dependency check failed." }
 & $MicromambaExe run --prefix $EnvironmentPrefix molood explore $ExampleFile --smiles-column smiles --target-column activity --output $SmokeReport
 if ($LASTEXITCODE -ne 0) { throw "Synthetic-data smoke test failed." }
 
+Write-Host "Removing downloaded package caches to reduce disk usage..."
+& $MicromambaExe clean --all --yes
+if ($LASTEXITCODE -ne 0) {
+    Write-Warning "Cache cleanup did not complete. The application is installed, but it may use extra disk space."
+}
+
 Write-Host ""
 Write-Host "Installation and smoke test complete. Start MolOOD Explorer with:"
 Write-Host "  powershell -ExecutionPolicy Bypass -File scripts\run-local.ps1"
