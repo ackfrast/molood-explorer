@@ -16,19 +16,17 @@ cd "${project_dir}"
 selected_port="$("${micromamba_bin}" run --prefix "${environment_prefix}" python -c '
 import socket, sys
 start = int(sys.argv[1])
-for port in range(start, min(start + 20, 65536)):
-    with socket.socket() as sock:
-        try:
-            sock.bind(("127.0.0.1", port))
-        except OSError:
-            continue
-    print(port)
-    raise SystemExit(0)
-raise SystemExit(1)
+with socket.socket() as sock:
+    try:
+        sock.bind(("127.0.0.1", start))
+    except OSError:
+        sock.bind(("127.0.0.1", 0))
+    print(sock.getsockname()[1])
 ' "${requested_port}")"
 if [[ "${selected_port}" != "${requested_port}" ]]; then
     echo "Port ${requested_port} is busy; using ${selected_port} instead."
 fi
-echo "Open http://127.0.0.1:${selected_port} in your browser."
+echo "MolOOD Explorer URL: http://127.0.0.1:${selected_port}"
+echo "Keep this terminal open. Press Ctrl+C here to stop the app."
 exec "${micromamba_bin}" run --prefix "${environment_prefix}" \
     streamlit run app.py --server.address 127.0.0.1 --server.port "${selected_port}"

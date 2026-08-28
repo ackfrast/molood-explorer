@@ -19,25 +19,23 @@ Set-Location $ProjectDir
 $PortProbe = @'
 import socket, sys
 start = int(sys.argv[1])
-for port in range(start, min(start + 20, 65536)):
-    sock = socket.socket()
+with socket.socket() as sock:
     try:
-        sock.bind(("127.0.0.1", port))
+        sock.bind(("127.0.0.1", start))
     except OSError:
-        continue
-    finally:
-        sock.close()
-    print(port)
-    raise SystemExit(0)
-raise SystemExit(1)
+        # Port 0 asks Windows to allocate an available ephemeral local port.
+        sock.bind(("127.0.0.1", 0))
+    print(sock.getsockname()[1])
 '@
 $SelectedPort = & $MicromambaExe run --prefix $EnvironmentPrefix python -c $PortProbe $Port
 if ($LASTEXITCODE -ne 0 -or -not $SelectedPort) {
-    throw "No available local port found between $Port and $([Math]::Min($Port + 19, 65535))."
+    throw "Could not allocate a local port for MolOOD Explorer."
 }
 $SelectedPort = [int]($SelectedPort | Select-Object -Last 1)
 if ($SelectedPort -ne $Port) {
     Write-Host "Port $Port is busy; using $SelectedPort instead."
 }
-Write-Host "Open http://127.0.0.1:$SelectedPort in your browser."
+$LocalUrl = "http://127.0.0.1:$SelectedPort"
+Write-Host "MolOOD Explorer URL: $LocalUrl"
+Write-Host "Keep this PowerShell window open. Press Ctrl+C here to stop the app."
 & $MicromambaExe run --prefix $EnvironmentPrefix streamlit run app.py --server.address 127.0.0.1 --server.port $SelectedPort

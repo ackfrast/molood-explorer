@@ -1,8 +1,14 @@
-# MolOOD Explorer v0.1.1
+# MolOOD Explorer v0.1.2
 
 First public preview of a local molecular out-of-distribution scenario exploration and splitting tool.
 
-## v0.1.1 fix
+## v0.1.2 fixes
+
+- The local launcher now handles an occupied port 8501 automatically on Windows, macOS, and Linux.
+- When necessary, the operating system allocates an available ephemeral port, such as `57050`, and the launcher prints the exact local URL.
+- README and local installation documentation now explain changing ports, keeping the launcher open, and stopping with `Ctrl+C`.
+
+## v0.1.1 fixes
 
 - Windows installation no longer fails when managed-device policy denies pytest access to `AppData\\Local\\Temp`.
 - Installer temporary files and smoke-test output now stay inside the extracted project's `.local-temp` directory.

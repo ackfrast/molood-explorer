@@ -10,6 +10,22 @@ Download and extract the project, then follow [LOCAL_INSTALL.md](LOCAL_INSTALL.m
 
 GitHub Release users can double-click `Install-Windows.bat` on Windows, or use `Install-macOS-Linux.command` on macOS/Linux. Always extract the archive before installing.
 
+### Local UI address and ports
+
+The launcher binds only to `127.0.0.1`, so the UI is available only on the computer running MolOOD Explorer. It first tries:
+
+```text
+http://127.0.0.1:8501
+```
+
+If port 8501 is already used by another application or an earlier Streamlit process, the launcher asks the operating system for another available local port. A URL such as the following is normal:
+
+```text
+http://127.0.0.1:57050
+```
+
+Open the exact URL printed in the PowerShell/terminal window. The number may change on the next launch. Keep that window open while using the UI, and press `Ctrl+C` in it to stop MolOOD Explorer.
+
 ## CentOS 7 / PBS environment
 
 Do not install into or run the project from the old base Conda environment. On this CentOS 7 host, its classic solver can spend a long time reading current conda-forge metadata. Use the standalone, statically linked **Micromamba** solver instead; it does not modify base Conda.
