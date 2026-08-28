@@ -15,22 +15,31 @@ if (-not (Test-Path $PythonExe)) {
 
 Set-Location $ProjectDir
 
-$PortProbe = @'
-import socket, sys
-start = int(sys.argv[1])
-with socket.socket() as sock:
-    try:
-        sock.bind(("127.0.0.1", start))
-    except OSError:
-        # Port 0 asks Windows to allocate an available ephemeral local port.
-        sock.bind(("127.0.0.1", 0))
-    print(sock.getsockname()[1])
-'@
-$SelectedPort = & $PythonExe -c $PortProbe $Port
-if ($LASTEXITCODE -ne 0 -or -not $SelectedPort) {
+function Get-AvailablePort([int]$PreferredPort) {
+    $Listener = $null
+    try {
+        $Listener = [System.Net.Sockets.TcpListener]::new(
+            [System.Net.IPAddress]::Loopback, $PreferredPort
+        )
+        $Listener.Start()
+        return [int]$Listener.LocalEndpoint.Port
+    }
+    finally {
+        if ($null -ne $Listener) {
+            $Listener.Stop()
+        }
+    }
+}
+
+try {
+    $SelectedPort = Get-AvailablePort $Port
+}
+catch {
+    $SelectedPort = Get-AvailablePort 0
+}
+if (-not $SelectedPort) {
     throw "Could not allocate a local port for MolOOD Explorer."
 }
-$SelectedPort = [int]($SelectedPort | Select-Object -Last 1)
 if ($SelectedPort -ne $Port) {
     Write-Host "Port $Port is busy; using $SelectedPort instead."
 }
