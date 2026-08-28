@@ -1,6 +1,12 @@
-# MolOOD Explorer v0.1.0
+# MolOOD Explorer v0.1.1
 
 First public preview of a local molecular out-of-distribution scenario exploration and splitting tool.
+
+## v0.1.1 fix
+
+- Windows installation no longer fails when managed-device policy denies pytest access to `AppData\\Local\\Temp`.
+- Installer temporary files and smoke-test output now stay inside the extracted project's `.local-temp` directory.
+- Installation validation uses a focused runtime import and synthetic-data smoke test; the development pytest suite remains available to contributors.
 
 ## Highlights
 
@@ -24,5 +30,4 @@ See `LOCAL_INSTALL.md` for troubleshooting and terminal commands.
 
 ## Verification
 
-Use `SHA256SUMS.txt` to verify downloaded archives. This release was tested end-to-end on Linux with Python 3.10, RDKit 2025.09.6, Streamlit 1.62.0, and pytest 8.4.2.
-
+Use `SHA256SUMS.txt` to verify downloaded archives. The application and installer flow were tested end-to-end on Linux with Python 3.10, RDKit 2025.09.6, and Streamlit 1.62.0. The development test suite passes with pytest 8.4.2.

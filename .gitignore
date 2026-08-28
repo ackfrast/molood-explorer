@@ -15,6 +15,7 @@ data/private/**
 outputs/
 .local-tools/
 .molood-env/
+.local-temp/
 molood-explorer-local.zip
 # Accidental directory created when a launch command was pasted as a path.
 /micromamba run*/

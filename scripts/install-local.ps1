@@ -18,6 +18,12 @@ $Platform = "win-64"
 
 New-Item -ItemType Directory -Force -Path $ToolsDir | Out-Null
 New-Item -ItemType Directory -Force -Path (Join-Path $ProjectDir "outputs") | Out-Null
+$LocalTemp = Join-Path $ProjectDir ".local-temp"
+New-Item -ItemType Directory -Force -Path $LocalTemp | Out-Null
+# Some managed Windows installations deny pytest/pip access to AppData\Temp.
+# Keep all installer temporary files inside the extracted project instead.
+$env:TEMP = $LocalTemp
+$env:TMP = $LocalTemp
 
 if (-not (Test-Path $MicromambaExe)) {
     Write-Host "Downloading Micromamba for Windows..."
@@ -41,9 +47,14 @@ if ($LASTEXITCODE -ne 0) { throw "Environment installation failed." }
 
 & $MicromambaExe run --prefix $EnvironmentPrefix python -m pip install --no-deps --editable $ProjectDir
 if ($LASTEXITCODE -ne 0) { throw "Project installation failed." }
-& $MicromambaExe run --prefix $EnvironmentPrefix python -m pytest -q (Join-Path $ProjectDir "tests")
-if ($LASTEXITCODE -ne 0) { throw "Project tests failed." }
+
+$ExampleFile = Join-Path $ProjectDir "examples\synthetic_molecules.csv"
+$SmokeReport = Join-Path $LocalTemp "scenario_report.json"
+& $MicromambaExe run --prefix $EnvironmentPrefix python -c "import rdkit, streamlit, plotly, molood_explorer; print('Core imports OK')"
+if ($LASTEXITCODE -ne 0) { throw "Core dependency check failed." }
+& $MicromambaExe run --prefix $EnvironmentPrefix molood explore $ExampleFile --smiles-column smiles --target-column activity --output $SmokeReport
+if ($LASTEXITCODE -ne 0) { throw "Synthetic-data smoke test failed." }
 
 Write-Host ""
-Write-Host "Installation complete. Start MolOOD Explorer with:"
+Write-Host "Installation and smoke test complete. Start MolOOD Explorer with:"
 Write-Host "  powershell -ExecutionPolicy Bypass -File scripts\run-local.ps1"

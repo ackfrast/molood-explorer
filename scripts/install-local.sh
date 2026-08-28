@@ -16,6 +16,9 @@ case "$(uname -s)-$(uname -m)" in
 esac
 
 mkdir -p "${tools_dir}" "${project_dir}/outputs"
+local_temp="${project_dir}/.local-temp"
+mkdir -p "${local_temp}"
+export TMPDIR="${local_temp}"
 if [[ ! -x "${micromamba_bin}" ]]; then
     echo "Downloading Micromamba for ${platform}..."
     archive="${tools_dir}/micromamba.tar.bz2"
@@ -34,8 +37,12 @@ fi
 "${micromamba_bin}" run --prefix "${environment_prefix}" \
     python -m pip install --no-deps --editable "${project_dir}"
 "${micromamba_bin}" run --prefix "${environment_prefix}" \
-    python -m pytest -q "${project_dir}/tests"
+    python -c 'import rdkit, streamlit, plotly, molood_explorer; print("Core imports OK")'
+"${micromamba_bin}" run --prefix "${environment_prefix}" \
+    molood explore "${project_dir}/examples/synthetic_molecules.csv" \
+    --smiles-column smiles --target-column activity \
+    --output "${local_temp}/scenario_report.json"
 
 echo
-echo "Installation complete. Start MolOOD Explorer with:"
+echo "Installation and smoke test complete. Start MolOOD Explorer with:"
 echo "  bash scripts/run-local.sh"
