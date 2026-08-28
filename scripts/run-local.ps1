@@ -6,11 +6,10 @@ param(
 $ErrorActionPreference = "Stop"
 
 $ProjectDir = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
-$MicromambaExe = Join-Path $ProjectDir ".local-tools\micromamba.exe"
 $EnvironmentPrefix = Join-Path $ProjectDir ".molood-env"
-$env:MAMBA_ROOT_PREFIX = Join-Path $ProjectDir ".local-tools\mamba-root"
+$PythonExe = Join-Path $EnvironmentPrefix "python.exe"
 
-if (-not (Test-Path $MicromambaExe) -or -not (Test-Path (Join-Path $EnvironmentPrefix "python.exe"))) {
+if (-not (Test-Path $PythonExe)) {
     throw "MolOOD Explorer is not installed. Run scripts\install-local.ps1 first."
 }
 
@@ -27,7 +26,7 @@ with socket.socket() as sock:
         sock.bind(("127.0.0.1", 0))
     print(sock.getsockname()[1])
 '@
-$SelectedPort = & $MicromambaExe run --prefix $EnvironmentPrefix python -c $PortProbe $Port
+$SelectedPort = & $PythonExe -c $PortProbe $Port
 if ($LASTEXITCODE -ne 0 -or -not $SelectedPort) {
     throw "Could not allocate a local port for MolOOD Explorer."
 }
@@ -38,4 +37,4 @@ if ($SelectedPort -ne $Port) {
 $LocalUrl = "http://127.0.0.1:$SelectedPort"
 Write-Host "MolOOD Explorer URL: $LocalUrl"
 Write-Host "Keep this PowerShell window open. Press Ctrl+C here to stop the app."
-& $MicromambaExe run --prefix $EnvironmentPrefix streamlit run app.py --server.address 127.0.0.1 --server.port $SelectedPort
+& $PythonExe -m streamlit run app.py --server.address 127.0.0.1 --server.port $SelectedPort
