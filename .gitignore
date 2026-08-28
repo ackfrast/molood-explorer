@@ -6,6 +6,7 @@ __pycache__/
 htmlcov/
 .venv/
 dist/
+release-dist/
 build/
 *.egg-info/
 .streamlit/secrets.toml

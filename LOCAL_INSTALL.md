@@ -4,7 +4,9 @@ MolOOD Explorer can run entirely on your own computer. Python, RDKit, Streamlit,
 
 ## Windows 10/11 (64-bit)
 
-Open the extracted folder in File Explorer. Shift-right-click an empty area, choose **Open PowerShell window here** (or open Windows Terminal in this folder), then run:
+After extracting the release ZIP, double-click `Install-Windows.bat`. When installation finishes, double-click `Run-Windows.bat`.
+
+The equivalent terminal commands are:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts\install-local.ps1
@@ -19,6 +21,8 @@ Open Terminal, change into the extracted folder, then run:
 bash scripts/install-local.sh
 bash scripts/run-local.sh
 ```
+
+The release also includes `Install-macOS-Linux.command` and `Run-macOS-Linux.command` launchers. macOS may require right-clicking a downloaded launcher and choosing **Open** the first time.
 
 If macOS asks for permission to run a downloaded program, approve Micromamba in **System Settings → Privacy & Security**.
 
@@ -38,4 +42,3 @@ Private input files can be placed under `data/private/`; they are excluded from 
 ## Updating or reinstalling
 
 Run the platform installation command again to update the environment. If installation was interrupted, rerun it. The environment is intentionally not included in the download because it is operating-system and CPU specific and would make the archive several gigabytes larger.
-

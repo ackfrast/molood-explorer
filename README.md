@@ -8,6 +8,8 @@ This is a scenario-design aid, not proof that a split represents deployment-time
 
 Download and extract the project, then follow [LOCAL_INSTALL.md](LOCAL_INSTALL.md). The included installers support Windows 10/11 x64, macOS Intel/Apple Silicon, and Linux x86-64/ARM64. They install an isolated Python/RDKit/Streamlit environment inside the project folder, so normal use is local and does not require a cluster, VPN, SSH tunnel, or an existing Python installation.
 
+GitHub Release users can double-click `Install-Windows.bat` on Windows, or use `Install-macOS-Linux.command` on macOS/Linux. Always extract the archive before installing.
+
 ## CentOS 7 / PBS environment
 
 Do not install into or run the project from the old base Conda environment. On this CentOS 7 host, its classic solver can spend a long time reading current conda-forge metadata. Use the standalone, statically linked **Micromamba** solver instead; it does not modify base Conda.
